@@ -35,7 +35,7 @@
         </constructor-arg>  
     </bean>  
     <!-- 消息监听器 -->  
-    <bean id="consumerMessageListener" class="com.skyon.mq.listener.ConsumerMessageListener"/>  
+    <bean id="consumerMessageListener" class="com.skyon.mq.listener.ConsumerMessageListener"/> 
     <!-- 消息监听容器 -->  
     <bean id="jmsContainer"  
         class="org.springframework.jms.listener.DefaultMessageListenerContainer">  
