@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<beans xmlns="http://www.springframework.org/schema/beans"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"  
+    xmlns:context="http://www.springframework.org/schema/context"  
+    xmlns:aop="http://www.springframework.org/schema/aop"  
+    xsi:schemaLocation="http://www.springframework.org/schema/beans   
+    http://www.springframework.org/schema/beans/spring-beans-2.5.xsd   
+    http://www.springframework.org/schema/context   
+    http://www.springframework.org/schema/context/spring-context-2.5.xsd "  
+    default-autowire="byName">  
+      
+    <!-- JMS TOPIC MODEL -->  
+    <!-- TOPIC链接工厂 -->  
+    <bean id="topicSendConnectionFactory" class="org.apache.activemq.spring.ActiveMQConnectionFactory">  
+        <property name="brokerURL" value="tcp://127.0.0.1:61616" />  
+        <property name="useAsyncSend" value="true" />  
+    </bean>  
+      
+    <bean id="topicListenConnectionFactory" class="org.apache.activemq.spring.ActiveMQConnectionFactory">  
+        <property name="brokerURL" value="tcp://127.0.0.1:61616" />  
+    </bean>  
+      
+    <!-- 定义主题 -->  
+    <bean id="myTopic"  class="org.apache.activemq.command.ActiveMQTopic">  
+      <constructor-arg value="normandy.topic"/>  
+    </bean>  
+      
+    <bean id="myTopic2"  class="org.apache.activemq.command.ActiveMQTopic">  
+      <constructor-arg value="normandy.topic2"/>  
+    </bean>  
+      
+    <!-- 消息转换器 -->  
+    <bean id="messageConvertForSys" class="com.skyon.mq.convert.MessageConvertForSys"></bean>  
+      
+    <!-- TOPIC send jms模板 -->  
+    <bean id="topicSendJmsTemplate" class="org.springframework.jms.core.JmsTemplate">  
+        <property name="connectionFactory" ref="topicSendConnectionFactory"></property>  
+        <property name="defaultDestination" ref="myTopic" />  
+        <property name="messageConverter" ref="messageConvertForSys" />  
+        <!-- 开启订阅模式 -->  
+        <property name="pubSubDomain" value="true"/>  
+    </bean>  
+      
+    <!-- 消息发送方 -->  
+    <bean id="topicMessageSender" class="com.skyon.mq.producer.MessageSender">  
+        <property name="jmsTemplate" ref="topicSendJmsTemplate"></property>  
+    </bean>  
+      
+    <!-- 消息接收方 -->  
+    <bean id="topicMessageReceiver" class="com.skyon.mq.consumer.MessageReceiver">  
+    </bean>  
+      
+    <!-- 主题消息监听容器 -->  
+    <bean id="listenerContainer"    
+        class="org.springframework.jms.listener.DefaultMessageListenerContainer">    
+        <property name="connectionFactory" ref="topicListenConnectionFactory" />    
+        <property name="pubSubDomain" value="true"/><!-- default is false -->  
+        <property name="destination" ref="myTopic" />  <!-- listen topic: myTopic -->  
+        <property name="subscriptionDurable" value="true"/>  
+        <property name="clientId" value="clientId_001"/><!---这里是设置接收客户端的ID，在持久化时，但这个客户端不在线时，消息就存在数据库里，知道被这个ID的客户端消费掉-->  
+        <property name="messageListener" ref="topicMessageReceiver" />    
+    </bean>  
+      
+    <!-- 主题消息监听容器2 -->  
+    <bean id="listenerContainer2"    
+        class="org.springframework.jms.listener.DefaultMessageListenerContainer">    
+        <property name="connectionFactory" ref="topicListenConnectionFactory" />    
+        <property name="pubSubDomain" value="true"/><!-- default is false -->  
+        <property name="destination" ref="myTopic2" />  <!-- listen topic: myTopic2 -->  
+        <property name="subscriptionDurable" value="true"/>  
+        <property name="clientId" value="clientId_002"/>
+        <property name="messageListener" ref="topicMessageReceiver" />    
+    </bean>  
+</beans>  
